@@ -11,7 +11,7 @@ class HankyungScraper:
         self.selenium_object = selenium_object 
         self.selenium_object.driver_settings()
 
-    def hankyung_scraper_settings_method(self, hankyung_news_portal: str, hankyung_news_table_name: str, target_date: str, sql_type: str, server_name: str, server_schema_name: str):
+    def hankyung_scraper_settings_method(self, hankyung_news_portal: str, hankyung_news_table_name: str, target_date: str, sql_type: str, server_name: str, hostname: str, server_schema_name: str):
         self.hankyung_news_portal       = hankyung_news_portal 
         self.hankyung_news_table_name   = hankyung_news_table_name 
         self.target_date                = target_date
@@ -19,7 +19,7 @@ class HankyungScraper:
         self.article_dictionary_columns = ["article_date", "article_source", "article_title", "article_text"]
         self.news_articles_dictionary   = []
         self.__database_interface       = DBInterface()
-        self.__database_interface.connection_settings(sql_type, os.getenv("ADMIN_NAME"), os.getenv("ADMIN_PWD"), server_name)
+        self.__database_interface.connection_settings(sql_type, os.getenv("ADMIN_NAME"), os.getenv("ADMIN_PWD"), hostname, server_name)
     
     def collect_hankyung_news_urls(self):
         def save_article_data():
@@ -35,7 +35,7 @@ class HankyungScraper:
         article_date, page_counter = str(dt.datetime.now().date()), 1
 
         while (article_date >= self.target_date):
-            self.selenium_object.driver.get(f"https://www.hankyung.com/financial-market?page={page_counter}")
+            self.selenium_object.driver.get(self.hankyung_news_portal.format(page_counter))
             elements_list = self.selenium_object.find_nested_elements("news-tit", self.selenium_object.wait_for_element_and_return_element("news-list"), "css")
             article_dates = [element.text.replace(".", "-") for element in self.selenium_object.find_nested_elements("txt-date", self.selenium_object.search_for_element("news-list"))]
             article_urls  = [element.get_attribute("href") for element in elements_list]
@@ -49,7 +49,7 @@ class HankyungScraper:
             article_text = self.selenium_object.wait_for_element_and_return_element("article-body").text if (self.selenium_object.check_for_element("article-body")) else ""
             sub_list.append(article_text)
 
-    
+
 
 # selenium_object = SeleniumSettings("./config/chromedriver.exe", 30)
 # selenium_object.driver_settings()
