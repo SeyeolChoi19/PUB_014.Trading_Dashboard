@@ -6,7 +6,7 @@
         },
         "hankyung_scraper_settings_method" : {
             "hankyung_news_portal"     : "https://www.hankyung.com/financial-market?page={}",
-            "hankyung_news_table_name" : "001_HANKYUNG_DATA",
+            "hankyung_news_table_name" : "001_NEWS_TABLE",
             "target_date"              : "2025-01-01",
             "sql_type"                 : "postgresql",
             "server_name"              : "002_TRADE_DB",
