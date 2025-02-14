@@ -7,7 +7,7 @@ from threading import Lock
 
 from config.DBInterfacePostgres          import DBInterface 
 from concurrent.futures                  import ThreadPoolExecutor 
-from custom_exceptions.custom_exceptions import extraction_exception
+from custom_exceptions.custom_exceptions import extraction_exception, database_upload_exception
 
 class MojitoInterface:
     def mojito_interface_settings_method(self, sql_type: str, hostname: str, server_name: str, schema_name: str, mojito_table: str):
@@ -38,6 +38,7 @@ class MojitoInterface:
             for symbol in stocks_list: 
                 executor.submit(extract_data, start_date, end_date, symbol)
     
+    @database_upload_exception
     def upload_data_to_database(self):
         output_dataframe = pd.concat(self.output_data).reset_index(drop = True)
         self.__db_object.upload_to_database(self.mojito_table, output_dataframe, schema_name = self.schema_name)
