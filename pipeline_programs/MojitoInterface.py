@@ -29,7 +29,8 @@ class MojitoInterface:
             company_dataframe = pd.DataFrame(self.__api_interface.fetch_ohlcv(symbol = symbol, timeframe = "D", start_day = start_date, end_day = end_date)["output2"])
 
             if (len(company_dataframe.columns) > 0):
-                self.output_data.append(company_dataframe)
+                with self.thread_lock:
+                    self.output_data.append(company_dataframe)
             
         start_date, end_date = [date_string.strip() for date_string in date_range.split("~")]
 
