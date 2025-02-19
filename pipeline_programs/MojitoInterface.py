@@ -17,28 +17,32 @@ class MojitoInterface:
         self.__db_object  = DBInterface()
         self.__db_object.connection_settings(sql_type, os.getenv("ADMIN_NAME"), os.getenv("ADMIN_PWD"), hostname, server_name)
 
-        self.__api_interface = mojito.KoreaInvestment(
-            api_key    = os.getenv("MOJITO_API_KEY"),
-            api_secret = os.getenv("MOJITO_API_SECRET"), 
-            acc_no     = os.getenv("MOJITO_ACCOUNT_NO")
+        self.__api_object = mojito.KoreaInvestment(
+            acc_no     = "",
+            api_key    = "",
+            api_secret = "",
         )
 
     def get_stock_data(self, date_range: str, stocks_list: list[str]):
         @extraction_exception
-        def extract_data(start_date: str, end_date: str, symbol: str):
-            company_dataframe = pd.DataFrame(self.__api_interface.fetch_ohlcv(symbol = symbol, timeframe = "D", start_day = start_date, end_day = end_date)["output2"])
+        def extract_data(start_date: dt.datetime.date, end_date: dt.datetime.date, symbol: str):
+            extraction_date = start_date
 
-            if (len(company_dataframe.columns) > 0):
-                with self.thread_lock:
-                    self.output_data.append(company_dataframe)
+            while (str(extraction_date) <= str(end_date)):
+                start_day_string = str(extraction_date.date()).replace("-", "")
+                end_day_string   = str((extraction_date + dt.timedelta(30)).date()).replace("-", "")
+                output_dataframe = pd.DataFrame(self.__api_object.fetch_ohlcv(symbol = symbol, timeframe = "D", start_day = start_day_string, end_day = end_day_string)["output2"])
+                extraction_date += dt.timedelta(days = 30)
+                
+                if (len(output_dataframe.columns) > 0):
+                    with self.thread_lock:
+                        output_dataframe["company_code"] = symbol
+                        self.output_data.append(output_dataframe)
+                        print(output_dataframe)
             
-        self.output_data, start_date, end_date = [], [date_string.strip() for date_string in date_range.split("~")]
+        start_date, end_date = [dt.datetime.strptime(date_string.strip(), "%Y-%m-%d") for date_string in date_range.split("~")]
+        self.output_data     = []
 
         with ThreadPoolExecutor(max_workers = 4) as executor:
             for symbol in stocks_list: 
                 executor.submit(extract_data, start_date, end_date, symbol)
-    
-    @database_upload_exception
-    def upload_data_to_database(self):
-        output_dataframe = pd.concat(self.output_data).reset_index(drop = True)
-        self.__db_object.upload_to_database(self.mojito_table, output_dataframe, schema_name = self.schema_name)
