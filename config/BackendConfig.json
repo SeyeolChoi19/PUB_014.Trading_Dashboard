@@ -5,13 +5,24 @@
             "max_wait_time" : 30
         },
         "hankyung_scraper_settings_method" : {
-            "hankyung_news_portal"     : "https://www.hankyung.com/financial-market?page={}",
             "hankyung_news_table_name" : "001_NEWS_TABLE",
             "target_date"              : "2025-01-01",
             "sql_type"                 : "postgresql",
             "server_name"              : "002_TRADE_DB",
             "hostname"                 : "localhost", 
-            "server_schema_name"       : "001_NEWS_SCHEMA"
+            "server_schema_name"       : "001_NEWS_SCHEMA",
+            "hankyung_news_portals"    : [
+                "https://www.hankyung.com/financial-market/financial-policy?page={}",
+                "https://www.hankyung.com/financial-market/bank?page={}",
+                "https://www.hankyung.com/financial-market/insurance-nbfis?page={}",
+                "https://www.hankyung.com/financial-market/cryptocurrency-fintech?page={}",
+                "https://www.hankyung.com/financial-market/personal-finance?page={}",
+                "https://www.hankyung.com/economy/economic-policy?page={}",
+                "https://www.hankyung.com/economy/macro?page={}",
+                "https://www.hankyung.com/economy/forex?page={}",
+                "https://www.hankyung.com/economy/tax?page={}",
+                "https://www.hankyung.com/economy/job-welfare?page={}"
+            ]
         }
     }
 }
