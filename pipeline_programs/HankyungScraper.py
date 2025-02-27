@@ -5,9 +5,11 @@ import pandas   as pd
 
 from threading import Lock
 
-from config.SeleniumSettings    import SeleniumSettings 
-from config.DBInterfacePostgres import DBInterface
-from concurrent.futures         import ThreadPoolExecutor 
+from config.SeleniumSettings             import SeleniumSettings 
+from config.DBInterfacePostgres          import DBInterface
+from concurrent.futures                  import ThreadPoolExecutor 
+from custom_exceptions.custom_exceptions import database_upload_exception
+from custom_exceptions.custom_exceptions import extraction_exception
 
 class HankyungScraper:
     def __init__(self, driver_path: str, max_wait_time: int):
@@ -25,6 +27,7 @@ class HankyungScraper:
         self.__database_interface       = DBInterface()
         self.__database_interface.connection_settings(sql_type, os.getenv("ADMIN_NAME"), os.getenv("ADMIN_PWD"), hostname, server_name)
     
+    @extraction_exception
     def collect_hankyung_news_urls(self):
         def save_article_data(article_dates: list[str], article_urls: list[str], titles_list: list[str]):
             for (article_date, article_url, article_title) in zip(article_dates, article_urls, titles_list):
@@ -56,6 +59,7 @@ class HankyungScraper:
             for page_url in self.hankyung_news_portals:
                 executor.submit(multithreaded_collector, page_url)
 
+    @extraction_exception
     def collect_article_texts(self):    
         def threaded_article_collector(sub_list: list[list[str]]):
             selenium_object = SeleniumSettings(self.driver_path, self.max_wait_time)
@@ -78,7 +82,8 @@ class HankyungScraper:
                 results_data.append(executor.submit(threaded_article_collector, sub_dictionary))
         
         self.news_articles_dictionary = [future_object.result() for future_object in results_data]
-        
+
+    @database_upload_exception        
     def upload_data_to_database(self):
         output_dataframe = pd.DataFrame(self.news_articles_dictionary, columns = self.article_dictionary_columns)
         self.__database_interface.upload_to_database(self.hankyung_news_table_name, output_dataframe, schema_name = self.server_schema_name)
